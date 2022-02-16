@@ -1,31 +1,31 @@
 ﻿
 #include <iostream>
 #include <thread>
-#include <barrier>
+
 using namespace std;
 
-bool stop = false;
-volatile int n = 0;
-
-auto incrementer = []() noexcept {
+auto incrementer = [](bool& stop, int& n) {
     while(!stop) {
         n++;
     }
 };
 
-auto odd_check = []() noexcept {
+auto odd_check = [](bool& stop, int& n) {
     while (!stop) {
         int ln = n;
-        // инкремент успевает увеличить значение на 1, что приводит к выдаче нечётных чисел!
+        // инкремент успевает увеличить значение на 1, что может привести к выдаче нечётных чисел?
         if (ln % 2 == 0) cout << ln << endl; 
     }
 };
 
 int main() {
-    thread thread1(incrementer); thread1.detach();
-    thread thread2(odd_check); thread2.detach();
+    bool stop = false;
+    int n = 0;
 
-    this_thread::sleep_for(chrono::milliseconds(100));
+    thread thread1(incrementer, ref(stop), ref(n)); thread1.detach();
+    thread thread2(odd_check, ref(stop), ref(n)); thread2.detach();
+
+    this_thread::sleep_for(chrono::milliseconds(200));
 
     stop = true;
    
